@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="pytesseract-api",
-    version="1.0.0",
+    version="1.0.1",
     author="Pradish Bijukchhe",
     author_email="pradishbijukchhe@gmail.com",
     description=(
@@ -21,6 +21,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
     ],
+    include_package_data=True,
     package_dir={"pytesseract_api": "pytesseract_api"},
     python_requires=">=3",
     install_requires=[],
