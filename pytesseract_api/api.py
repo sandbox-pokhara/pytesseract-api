@@ -1,14 +1,24 @@
 import atexit
 import os
+from ctypes import CDLL
+from ctypes import POINTER
+from ctypes import c_char_p
+from ctypes import c_int
+from ctypes import c_void_p
+from ctypes import cdll
 from functools import lru_cache
+from typing import Any
+from typing import Optional
 
-from pytesseract_api.capi import CpyAPI
+from cv2.typing import MatLike
+
+from pytesseract_api.capi_types import TessBaseAPI
 from pytesseract_api.capi_types import TessPageSegMode
 from pytesseract_api.exceptions import TesseractError
 
 
 @lru_cache()
-def find_tess_path():
+def find_tess_path() -> str:
     path = os.get_exec_path()
     for p in path:
         if p.lower().endswith("tesseract-ocr"):
@@ -17,22 +27,54 @@ def find_tess_path():
 
 
 @lru_cache()
-def get_tess_api(lib_path=None, tessdata_path=None, lang="eng"):
+def get_tess_lib(lib_path: Optional[str]) -> CDLL:
     if lib_path is None:
         path = find_tess_path()
         lib_path = os.path.join(path, "libtesseract-5.dll")
 
+    lib = cdll.LoadLibrary(lib_path)
+    lib.TessBaseAPICreate.restype = POINTER(TessBaseAPI)
+    lib.TessBaseAPICreate.argtypes = []
+    lib.TessBaseAPIInit3.restype = c_int
+    lib.TessBaseAPIInit3.argtypes = [
+        POINTER(TessBaseAPI),
+        c_char_p,
+        c_char_p,
+    ]
+    lib.TessBaseAPIDelete.restype = None
+    lib.TessBaseAPIDelete.argtypes = [POINTER(TessBaseAPI)]
+    lib.TessBaseAPISetPageSegMode.restype = None
+    lib.TessBaseAPISetPageSegMode.argtypes = [POINTER(TessBaseAPI), c_int]
+    lib.TessBaseAPISetImage.restype = None
+    lib.TessBaseAPISetImage.argtypes = [
+        POINTER(TessBaseAPI),
+        c_void_p,
+        c_int,
+        c_int,
+        c_int,
+        c_int,
+    ]
+    lib.TessBaseAPIGetUTF8Text.restype = c_char_p
+    lib.TessBaseAPIGetUTF8Text.argtypes = [POINTER(TessBaseAPI)]
+    return lib
+
+
+@lru_cache()
+def get_tess_api(
+    lib: CDLL,
+    tessdata_path: Optional[str] = None,
+    lang: str = "eng",
+) -> Any:
     if tessdata_path is None:
         path = find_tess_path()
         tessdata_path = os.path.join(path, "tessdata")
-
-    api = CpyAPI(lib_path)
-    api.TessBaseAPIInit3(tessdata_path.encode(), lang.encode())
-    atexit.register(api.TessBaseAPIDelete)
+    api = lib.TessBaseAPICreate()
+    lib.TessBaseAPIInit3(api, tessdata_path.encode(), lang.encode())
+    atexit.register(lambda: lib.TessBaseAPIDelete(api))
     return api
 
 
-def get_image_data(img):
+def get_image_data(img: MatLike) -> tuple[int, int, int, int, int]:
     depth = 1 if len(img.shape) < 3 else img.shape[2]
     return (
         img.ctypes.data,
@@ -44,20 +86,20 @@ def get_image_data(img):
 
 
 def image_to_string(
-    img,
-    lib_path=None,
-    tessdata_path=None,
-    lang="eng",
-    psm=TessPageSegMode.PSM_SINGLE_BLOCK,
-):
+    img: MatLike,
+    lib_path: Optional[str] = None,
+    tessdata_path: Optional[str] = None,
+    lang: str = "eng",
+    psm: TessPageSegMode = TessPageSegMode.PSM_SINGLE_BLOCK,
+) -> str:
     # NOTE: ocr bugs on sliced image without this
     img = img.copy()
     data = get_image_data(img)
-    api = get_tess_api(
-        lib_path=lib_path, tessdata_path=tessdata_path, lang=lang
-    )
-    api.TessBaseAPISetPageSegMode(psm)
-    api.TessBaseAPISetImage(*data)
-    res = api.TessBaseAPIGetUTF8Text()
+
+    lib = get_tess_lib(lib_path)
+    api = get_tess_api(lib, tessdata_path=tessdata_path, lang=lang)
+    lib.TessBaseAPISetPageSegMode(api, psm.value)
+    lib.TessBaseAPISetImage(api, *data)
+    res: bytes = lib.TessBaseAPIGetUTF8Text(api)
     text = res.decode().strip()
     return text

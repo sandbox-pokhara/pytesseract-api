@@ -1,12 +1,8 @@
-from enum import Enum
 from ctypes import Structure
+from enum import Enum
 
 
 class TessBaseAPI(Structure):
-    ...
-
-
-class TessResultRenderer(Structure):
     ...
 
 
@@ -26,81 +22,3 @@ class TessPageSegMode(Enum):
     PSM_SPARSE_TEXT_OSD = 12
     PSM_RAW_LINE = 13
     PSM_COUNT = 14
-
-    # ctyps 'Structure' like..
-    def from_param(self):
-        return self.value
-
-
-class TessPageIterator(Structure):
-    ...
-
-
-class TessPageIteratorLevel(Structure):
-    ...
-
-
-class TessResultIterator(Structure):
-    ...
-
-
-class TessChoiceIterator(Structure):
-    ...
-
-
-class TessMutableIterator(Structure):
-    ...
-
-
-class TessOcrEngineMode(Enum):
-    OEM_TESSERACT_ONLY = 0
-    OEM_LSTM_ONLY = 1
-    OEM_TESSERACT_LSTM_COMBINED = 2
-    OEM_DEFAULT = 3
-
-    def from_param(self):
-        return self.value
-
-
-class ETEXT_DESC(Structure):
-    ...
-
-
-class Boxa(Structure):
-    ...
-
-
-class TessWritingDirection(Structure):
-    ...
-
-
-class TessOrientation(Structure):
-    ...
-
-
-class TessTextlineOrder(Structure):
-    ...
-
-
-class TessParagraphJustification(Structure):
-    ...
-
-
-class TessCancelFunc(Structure):
-    ...
-
-
-class TessProgressFunc(Structure):
-    ...
-
-
-class TessPolyBlockType(Structure):
-    ...
-
-
-class Pix(Structure):
-    ...
-
-
-class Pixa(Structure):
-    ...
