@@ -13,9 +13,11 @@ setuptools.setup(
     ),
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/pradishb/pytesseract-api",
+    url="https://github.com/sandbox-pokhara/pytesseract-api",
     project_urls={
-        "Bug Tracker": "https://github.com/pradishb/pytesseract-api/issues",
+        "Bug Tracker": (
+            "https://github.com/sandbox-pokhara/pytesseract-api/issues"
+        ),
     },
     classifiers=[
         "Programming Language :: Python :: 3",
