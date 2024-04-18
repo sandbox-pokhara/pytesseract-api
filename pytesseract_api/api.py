@@ -2,12 +2,14 @@ import atexit
 import os
 from ctypes import CDLL
 from ctypes import POINTER
+from ctypes import c_bool
 from ctypes import c_char_p
 from ctypes import c_int
 from ctypes import c_void_p
 from ctypes import cdll
 from functools import lru_cache
 from typing import Any
+from typing import Dict
 from typing import Optional
 
 from cv2.typing import MatLike
@@ -56,6 +58,12 @@ def get_tess_lib(lib_path: Optional[str]) -> CDLL:
     ]
     lib.TessBaseAPIGetUTF8Text.restype = c_char_p
     lib.TessBaseAPIGetUTF8Text.argtypes = [POINTER(TessBaseAPI)]
+    lib.TessBaseAPISetVariable.restype = c_bool
+    lib.TessBaseAPISetVariable.argtypes = [
+        POINTER(TessBaseAPI),
+        c_char_p,
+        c_char_p,
+    ]
     return lib
 
 
@@ -91,6 +99,7 @@ def image_to_string(
     tessdata_path: Optional[str] = None,
     lang: str = "eng",
     psm: TessPageSegMode = TessPageSegMode.PSM_SINGLE_BLOCK,
+    variables: Dict[str, str] = {},
 ) -> str:
     # NOTE: ocr bugs on sliced image without this
     img = img.copy()
@@ -98,6 +107,8 @@ def image_to_string(
 
     lib = get_tess_lib(lib_path)
     api = get_tess_api(lib, tessdata_path=tessdata_path, lang=lang)
+    for k, v in variables.items():
+        lib.TessBaseAPISetVariable(api, k.encode(), v.encode())
     lib.TessBaseAPISetPageSegMode(api, psm.value)
     lib.TessBaseAPISetImage(api, *data)
     res: bytes = lib.TessBaseAPIGetUTF8Text(api)
