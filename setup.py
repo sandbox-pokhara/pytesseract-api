@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="pytesseract-api",
-    version="1.0.1",
+    version="1.0.2",
     author="Pradish Bijukchhe",
     author_email="pradishbijukchhe@gmail.com",
     description=(
