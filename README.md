@@ -16,10 +16,16 @@ pip install pytesseract-api
 import cv2
 
 from pytesseract_api import image_to_string
+from pytesseract_api.api import set_variable
 
 img = cv2.imread("sample.png")
 text = image_to_string(img)
 print(text)
+
+img = cv2.imread("digits.png")
+set_variable("tessedit_char_whitelist", "0123456789")
+text = image_to_string(img)
+set_variable("tessedit_char_whitelist", "") # reset
 ```
 
 ## Limitations

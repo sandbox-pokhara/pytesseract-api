@@ -9,7 +9,6 @@ from ctypes import c_void_p
 from ctypes import cdll
 from functools import lru_cache
 from typing import Any
-from typing import Dict
 from typing import Optional
 
 from cv2.typing import MatLike
@@ -99,7 +98,6 @@ def image_to_string(
     tessdata_path: Optional[str] = None,
     lang: str = "eng",
     psm: TessPageSegMode = TessPageSegMode.PSM_SINGLE_BLOCK,
-    variables: Dict[str, str] = {},
 ) -> str:
     # NOTE: ocr bugs on sliced image without this
     img = img.copy()
@@ -107,10 +105,20 @@ def image_to_string(
 
     lib = get_tess_lib(lib_path)
     api = get_tess_api(lib, tessdata_path=tessdata_path, lang=lang)
-    for k, v in variables.items():
-        lib.TessBaseAPISetVariable(api, k.encode(), v.encode())
     lib.TessBaseAPISetPageSegMode(api, psm.value)
     lib.TessBaseAPISetImage(api, *data)
     res: bytes = lib.TessBaseAPIGetUTF8Text(api)
     text = res.decode().strip()
     return text
+
+
+def set_variable(
+    key: str,
+    value: str,
+    lib_path: Optional[str] = None,
+    tessdata_path: Optional[str] = None,
+    lang: str = "eng",
+):
+    lib = get_tess_lib(lib_path)
+    api = get_tess_api(lib, tessdata_path=tessdata_path, lang=lang)
+    lib.TessBaseAPISetVariable(api, key.encode(), value.encode())
